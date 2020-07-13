@@ -26,6 +26,7 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 
@@ -33,8 +34,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     int count =0;
-    List<Marker> placesMarkers = new ArrayList<>();
     List<Marker> distanceMarkers = new ArrayList<>();
+    List<LatLng> placeMarkers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -58,11 +59,13 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onMapClick(LatLng latLng) {
                 List<Address> addresses = null;
+                System.out.println("inside map click");
                 count = count+1;
                if(count <=4){
                    System.out.println("inside map click");
                    MarkerOptions markerOptions = new MarkerOptions();
                    markerOptions.position(latLng);
+                   placeMarkers.add(latLng);
                    try {
                        addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
                    } catch (IOException e) {
@@ -70,7 +73,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                        e.printStackTrace();
                    }
 
-                   System.out.println(addresses.get(0).toString()+"address");
+
                    markerOptions.title
                            ( addresses.get(0).getThoroughfare()+" "+ addresses.get(0).getSubThoroughfare()+" "+
                                    addresses.get(0).getPostalCode()).
@@ -126,7 +129,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                totalDistance = (results0[0]+results1[0]+results2[0]+results3[0])/1000;
 
                 new AlertDialog.Builder(MapsActivity.this)
-                        .setTitle("Delete entry")
+                        .setTitle("A-B-C-D")
                         .setMessage(String.valueOf(totalDistance)+"KMS")
 
                         // Specifying a listener allows you to take an action before dismissing the dialog.
@@ -175,7 +178,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 distanceMarkers.add(m);
 
                 new AlertDialog.Builder(MapsActivity.this)
-                        .setTitle("Delete entry")
+                        .setTitle("Distance between two polylines")
                         .setMessage(String.valueOf(results[0]/1000)+"KMS")
 
                         // Specifying a listener allows you to take an action before dismissing the dialog.
@@ -194,6 +197,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+
+        mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
+            @Override
+            public void onMarkerDragStart(final Marker arg0) {
+
+                Iterator<LatLng> iter = placeMarkers.iterator();
+                while (iter.hasNext()) {
+                    LatLng p = iter.next();
+                    if(p.longitude== arg0.getPosition().longitude && p.latitude== arg0.getPosition().latitude){
+                        iter.remove();
+                    }
+                }
+
+
+
+            }
+
+            @SuppressWarnings("unchecked")
+            @Override
+            public void onMarkerDragEnd(Marker arg0) {
+                mMap.clear();
+                // TODO Auto-generated method stub
+
+                mMap.animateCamera(CameraUpdateFactory.newLatLng(arg0.getPosition()));
+                placeMarkers.add(arg0.getPosition());
+            }
+
+            @Override
+            public void onMarkerDrag(Marker arg0) {
+                // TODO Auto-generated method stub
+               // Log.i("System out", "onMarkerDrag...");
+            }
+        });
+
+    }
+
+    public void placeMarksDrawPolyline(){
 
     }
 
