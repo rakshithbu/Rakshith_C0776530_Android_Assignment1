@@ -9,6 +9,7 @@ import android.location.Address;
 import android.location.Geocoder;
 import android.location.Location;
 import android.os.Bundle;
+import android.widget.ArrayAdapter;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -41,6 +42,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
      ArrayList<Marker> dragMarker = new ArrayList<>();
      ArrayList<Polyline> polylines = new ArrayList<>();
      ArrayList<Polygon> polygons = new ArrayList<>();
+     ArrayList<Marker> tempMarker = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -216,30 +218,32 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             }
 
-            @SuppressWarnings("unchecked")
             @Override
             public void onMarkerDragEnd(Marker arg0) {
 
-                Iterator<Polyline> iter = polylines.iterator();
-                while (iter.hasNext()) {
-                    Polyline p = iter.next();
-                    p.remove();
-                    iter.remove();
-                }
-
-                Iterator<Polygon> iter1 = polygons.iterator();
-                while (iter1.hasNext()) {
-                    Polygon p = iter1.next();
-                    p.remove();
-                    iter1.remove();
-                }
+                mMap.clear();
+//                Iterator<Polyline> iter = polylines.iterator();
+//                while (iter.hasNext()) {
+//                    Polyline p = iter.next();
+//                    p.remove();
+//                    iter.remove();
+//                }
+//
+//                Iterator<Polygon> iter1 = polygons.iterator();
+//                while (iter1.hasNext()) {
+//                    Polygon p = iter1.next();
+//                    p.remove();
+//                    iter1.remove();
+//                }
 
 
 
                  List<Address> addresses = null;
                  PolylineOptions polylineOptions1 = new PolylineOptions();
                  PolygonOptions polygonOptions1 = new PolygonOptions();
+                 tempMarker.clear();
 
+                System.out.println("dragMarker.size()===>"+dragMarker.size());
                 for (int i = 0; i < dragMarker.size(); i++){
                     try {
                         addresses = geocoder.getFromLocation(dragMarker.get(i).getPosition().latitude,
@@ -260,7 +264,16 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                             dragMarker.get(i).getPosition().longitude)).color(Color.RED);
                     polygonOptions1.add(dragMarker.get(i).getPosition());
 
+                   MarkerOptions m = new MarkerOptions()
+                            .position(
+                                    new LatLng(dragMarker.get(i).getPosition().latitude,
+                                            dragMarker.get(i).getPosition().longitude))
+                            .draggable(true).title(dragMarker.get(i).getTitle()).snippet(dragMarker.get(i).getSnippet());
+
+                   tempMarker.add(mMap.addMarker(m));
                 }
+               dragMarker.clear();
+               dragMarker.addAll(tempMarker);
 
                 Polyline p =  mMap.addPolyline(polylineOptions1);
                 p.setClickable(true);
@@ -284,55 +297,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             @Override
             public void onMapLongClick(final LatLng latLng) {
-                System.out.println("inside map long press");
-
-                /*Collections.sort(polylines, new Comparator<Polyline>() {
-
-                    @Override
-                    public int compare(Polyline polyline, Polyline t1) {
-                        Location currentLocation = new Location("currentLocation");
-                        currentLocation.setLatitude(latLng.latitude);
-                        currentLocation.setLongitude(latLng.longitude);
-
-                        ArrayList<Float> pointsA = new ArrayList<>();
-
-                        Location polylineA1 = new Location("point A");
-                        polylineA1.setLatitude(polyline.getPoints().get(0).latitude);
-                        polylineA1.setLongitude(polyline.getPoints().get(0).longitude);
-
-                        pointsA.add(currentLocation.distanceTo(polylineA1));
-
-                        ArrayList<Float> pointsA2 = new ArrayList<>();
-
-                        Location polylineA2 = new Location("point A2");
-                        polylineA2.setLatitude(polyline.getPoints().get(1).latitude);
-                        polylineA2.setLongitude(polyline.getPoints().get(1).longitude);
-
-                        pointsA2.add(currentLocation.distanceTo(polylineA2));
-
-
-                        return Float.compare(distanceOne, distanceTwo);
-
-                    }
-
-
-                    public int compare(Marker marker, Marker t1) {
-                        Location currentLocation = new Location("currentLocation");
-                        currentLocation.setLatitude(latLng.latitude);
-                        currentLocation.setLongitude(latLng.longitude);
-                        Location locationA = new Location("point A");
-                        locationA.setLatitude(marker.getPosition().latitude);
-                        locationA.setLongitude(marker.getPosition().longitude);
-                        Location locationB = new Location("point B");
-                        locationB.setLatitude(t1.getPosition().latitude);
-                        locationB.setLongitude(t1.getPosition().longitude);
-                        float distanceOne = currentLocation.distanceTo(locationA);
-                        float distanceTwo = currentLocation.distanceTo(locationB);
-                        return Float.compare(distanceOne, distanceTwo);
-                    }
-                });*/
 
 if(dragMarker.size()>0){
+
+
     Collections.sort(dragMarker, new Comparator<Marker>() {
 
         @Override
@@ -366,6 +334,7 @@ if(dragMarker.size()>0){
         Polygon p = iter1.next();
         p.remove();
         iter1.remove();
+    }
 
 
 
@@ -382,7 +351,7 @@ if(dragMarker.size()>0){
         }
 
         Polyline pp =  mMap.addPolyline(polylineOptions1);
-        p.setClickable(true);
+        pp.setClickable(true);
         polylines.add(pp);
 
         if(count==4){
@@ -399,7 +368,7 @@ if(dragMarker.size()>0){
 
 
 
-            }
+
         });
     }
 
