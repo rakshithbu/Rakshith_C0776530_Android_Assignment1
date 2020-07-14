@@ -36,9 +36,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     int count =0;
-    ArrayList<Marker> distanceMarkers = new ArrayList<>();
-    ArrayList<LatLng> placeMarkers = new ArrayList<>();
-    ArrayList<Marker> dragMarker = new ArrayList<>();
+
+     ArrayList<Marker> distanceMarkers = new ArrayList<>();
+     ArrayList<LatLng> placeMarkers = new ArrayList<>();
+     ArrayList<Marker> dragMarker = new ArrayList<>();
      ArrayList<Polyline> polylines = new ArrayList<>();
      ArrayList<Polygon> polygons = new ArrayList<>();
 
@@ -54,7 +55,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         final Geocoder geocoder = new Geocoder(MapsActivity.this, Locale.getDefault());
+
         mMap = googleMap;
+
        final PolylineOptions polylineOptions = new PolylineOptions();
        final PolygonOptions polygonOptions = new PolygonOptions();
 
@@ -67,7 +70,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 System.out.println("inside map click");
                 count = count+1;
                if(count <=4){
-                   System.out.println("inside map click");
 
                    MarkerOptions markerOptions = new MarkerOptions();
                    markerOptions.position(latLng);
@@ -87,12 +89,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                   Marker ms =  mMap.addMarker(markerOptions);
                   ms.setDraggable(true);
-
-
-
-                   dragMarker.add(ms);
-
-
+                  dragMarker.add(ms);
                    polylineOptions.add(new LatLng(latLng.latitude , latLng.longitude)).color(Color.RED);
                    Polyline py = mMap.addPolyline(polylineOptions);
                    py.setClickable(true);
@@ -152,15 +149,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .setTitle("A-B-C-D")
                         .setMessage(String.valueOf(totalDistance)+"KMS")
 
-                        // Specifying a listener allows you to take an action before dismissing the dialog.
-                        // The dialog is automatically dismissed when a dialog button is clicked.
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                                // Continue with delete operation
+
                             }
                         })
 
-                        // A null listener allows the button to dismiss the dialog and take no further action.
                         .setNegativeButton(android.R.string.no, null)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .show();
@@ -172,7 +166,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             public void onPolylineClick(Polyline polyline) {
                 System.out.println("inside polyline click");
 
-              LatLng midpoint =  findMidPoint(polyline.getPoints().get(0).latitude,polyline.getPoints().get(0).longitude,polyline.getPoints().get(1).latitude,polyline.getPoints().get(1).longitude);
+              LatLng midpoint =  findMidPoint(polyline.getPoints().get(0).latitude,
+                      polyline.getPoints().get(0).longitude,polyline.getPoints().get(1).latitude,
+                      polyline.getPoints().get(1).longitude);
 
                 float[] results = new float[1];
                 Location.distanceBetween(polyline.getPoints().get(0).latitude, polyline.getPoints().get(0).longitude,
@@ -185,7 +181,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .title(String.format(Locale.CANADA,"%.2f Km", results[0]/1000))
 
                         .icon(transparent)
-                        .anchor((float) 0.5, (float) 0.5); //puts the info window on the polyline
+                        .anchor((float) 0.5, (float) 0.5);
 
                 Marker m = mMap.addMarker(options);
 
@@ -201,15 +197,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                         .setTitle("Distance between two polylines")
                         .setMessage(String.valueOf(results[0]/1000)+"KMS")
 
-                        // Specifying a listener allows you to take an action before dismissing the dialog.
-                        // The dialog is automatically dismissed when a dialog button is clicked.
                         .setPositiveButton(android.R.string.yes, new DialogInterface.OnClickListener() {
                             public void onClick(DialogInterface dialog, int which) {
-                                // Continue with delete operation
+
                             }
                         })
 
-                        // A null listener allows the button to dismiss the dialog and take no further action.
                         .setNegativeButton(android.R.string.no, null)
                         .setIcon(android.R.drawable.ic_dialog_alert)
                         .show();
@@ -222,21 +215,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragStart(final Marker arg0) {
 
-                Iterator<Polyline> iter = polylines.iterator();
-                while (iter.hasNext()) {
-                    Polyline p = iter.next();
-                    p.remove();
-                    iter.remove();
-
-                }
-
-                Iterator<Polygon> iter1 = polygons.iterator();
-                while (iter1.hasNext()) {
-                    Polygon p = iter1.next();
-                    p.remove();
-                    iter1.remove();
-
-                }
 
                 /*System.out.println("inside drag method");
                 System.out.println("arg0.getPosition().latitude==>"+arg0.getPosition().latitude);
@@ -262,7 +240,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Polyline p = iter.next();
                     p.remove();
                     iter.remove();
-
                 }
 
                 Iterator<Polygon> iter1 = polygons.iterator();
@@ -270,7 +247,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     Polygon p = iter1.next();
                     p.remove();
                     iter1.remove();
-
                 }
 
                 placeMarkers.add(arg0.getPosition());
