@@ -38,6 +38,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     int count =0;
     ArrayList<Marker> distanceMarkers = new ArrayList<>();
     ArrayList<LatLng> placeMarkers = new ArrayList<>();
+    ArrayList<Marker> dragMarker = new ArrayList<>();
+     ArrayList<Polyline> polylines = new ArrayList<>();
+     ArrayList<Polygon> polygons = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -52,8 +55,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public void onMapReady(GoogleMap googleMap) {
         final Geocoder geocoder = new Geocoder(MapsActivity.this, Locale.getDefault());
         mMap = googleMap;
-        final  PolygonOptions polygonOptions = new PolygonOptions();
-        final PolylineOptions polylineOptions = new PolylineOptions();
+       final PolylineOptions polylineOptions = new PolylineOptions();
+       final PolygonOptions polygonOptions = new PolygonOptions();
 
 
         mMap.setOnMapClickListener(new GoogleMap.OnMapClickListener() {
@@ -65,6 +68,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 count = count+1;
                if(count <=4){
                    System.out.println("inside map click");
+
                    MarkerOptions markerOptions = new MarkerOptions();
                    markerOptions.position(latLng);
                    placeMarkers.add(latLng);
@@ -81,17 +85,33 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                            snippet(addresses.get(0).getCountryName() +"  "+addresses.get(0).getLocality()).
                            icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
 
-                   mMap.addMarker(markerOptions).setDraggable(true);
+                  Marker ms =  mMap.addMarker(markerOptions);
+                  ms.setDraggable(true);
+
+
+
+                   dragMarker.add(ms);
+
+
                    polylineOptions.add(new LatLng(latLng.latitude , latLng.longitude)).color(Color.RED);
-                   mMap.addPolyline(polylineOptions).setClickable(true);
+                   Polyline py = mMap.addPolyline(polylineOptions);
+                   py.setClickable(true);
+                   polylines.add(mMap.addPolyline(polylineOptions));
+
                    mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
+
                    polygonOptions.add(new LatLng(latLng.latitude , latLng.longitude));
 
                }
 
                 if(count ==4){
                     polygonOptions.fillColor(Color.BLUE);
-                   mMap.addPolygon(polygonOptions.strokeColor(Color.RED)).setClickable(true);
+                    polygonOptions.strokeColor(Color.RED);
+
+                    Polygon po =  mMap.addPolygon(polygonOptions);
+                    po.setClickable(true);
+                    polygons.add(po);
+
                 }
             }
         });
@@ -201,7 +221,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
             public void onMarkerDragStart(final Marker arg0) {
-                System.out.println("inside drag method");
+
+                Iterator<Polyline> iter = polylines.iterator();
+                while (iter.hasNext()) {
+                    Polyline p = iter.next();
+                    p.remove();
+                    iter.remove();
+
+                }
+
+                Iterator<Polygon> iter1 = polygons.iterator();
+                while (iter1.hasNext()) {
+                    Polygon p = iter1.next();
+                    p.remove();
+                    iter1.remove();
+
+                }
+
+                /*System.out.println("inside drag method");
                 System.out.println("arg0.getPosition().latitude==>"+arg0.getPosition().latitude);
                 System.out.println("arg0.getPosition().longitude==>"+arg0.getPosition().longitude);
 
@@ -211,7 +248,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     if(p.longitude== arg0.getPosition().longitude && p.latitude== arg0.getPosition().latitude){
                         iter.remove();
                     }
-                }
+                }*/
 
 
             }
@@ -219,34 +256,65 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @SuppressWarnings("unchecked")
             @Override
             public void onMarkerDragEnd(Marker arg0) {
-                mMap.clear();
-                MarkerOptions markerOptions = new MarkerOptions();
-                placeMarkers.add(arg0.getPosition());
-                List<Address> addresses = null;
-               PolylineOptions polylineOptions1 = new PolylineOptions();
-               PolygonOptions polygonOptions1 = new PolygonOptions();
 
-                for (int i = 0; i < placeMarkers.size(); i++){
+                Iterator<Polyline> iter = polylines.iterator();
+                while (iter.hasNext()) {
+                    Polyline p = iter.next();
+                    p.remove();
+                    iter.remove();
+
+                }
+
+                Iterator<Polygon> iter1 = polygons.iterator();
+                while (iter1.hasNext()) {
+                    Polygon p = iter1.next();
+                    p.remove();
+                    iter1.remove();
+
+                }
+
+                placeMarkers.add(arg0.getPosition());
+
+                 List<Address> addresses = null;
+                 PolylineOptions polylineOptions1 = new PolylineOptions();
+                 PolygonOptions polygonOptions1 = new PolygonOptions();
+
+                for (int i = 0; i < dragMarker.size(); i++){
                     try {
-                        addresses = geocoder.getFromLocation(placeMarkers.get(i).latitude, placeMarkers.get(i).longitude, 1);
+                        addresses = geocoder.getFromLocation(dragMarker.get(i).getPosition().latitude, dragMarker.get(i).getPosition().longitude, 1);
                     } catch (IOException e) {
                         e.printStackTrace();
                         e.printStackTrace();
                     }
-                    markerOptions.title
-                            ( addresses.get(0).getThoroughfare()+" "+ addresses.get(0).getSubThoroughfare()+" "+
-                                    addresses.get(0).getPostalCode()).
-                            snippet(addresses.get(0).getCountryName() +"  "+addresses.get(0).getLocality()).
-                            icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
-                    markerOptions.position(placeMarkers.get(i));
-                    mMap.animateCamera(CameraUpdateFactory.newLatLng(placeMarkers.get(i)));
-                    mMap.addMarker(markerOptions).setDraggable(true);
-                    polylineOptions1.add(new LatLng(placeMarkers.get(i).latitude , placeMarkers.get(i).longitude)).color(Color.RED);
-                    polygonOptions1.add(placeMarkers.get(i));
+
+                    if (addresses != null && !addresses.isEmpty()) {
+
+                        arg0.setTitle
+                                ( addresses.get(0).getThoroughfare()+" "+ addresses.get(0).getSubThoroughfare()+" "+
+                                        addresses.get(0).getPostalCode());
+
+                        arg0.setSnippet(addresses.get(0).getCountryName() +"  "+addresses.get(0).getLocality());
+                    }
+
+
+
+                    polylineOptions1.add(new LatLng(dragMarker.get(i).getPosition().latitude , dragMarker.get(i).getPosition().longitude)).color(Color.RED);
+                    polygonOptions1.add(dragMarker.get(i).getPosition());
+
 
                 }
-                mMap.addPolyline(polylineOptions1).setClickable(true);
-                mMap.addPolygon(polygonOptions1);
+
+
+
+                Polyline p =  mMap.addPolyline(polylineOptions1);
+                p.setClickable(true);
+                polylines.add(p);
+
+                polygonOptions1.fillColor(Color.BLUE);
+                polygonOptions1.strokeColor(Color.RED);
+                Polygon po = mMap.addPolygon(polygonOptions1);
+                po.setClickable(true);
+                polygons.add(po);
 
             }
 
