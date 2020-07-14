@@ -38,7 +38,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     int count =0;
 
      ArrayList<Marker> distanceMarkers = new ArrayList<>();
-     ArrayList<LatLng> placeMarkers = new ArrayList<>();
      ArrayList<Marker> dragMarker = new ArrayList<>();
      ArrayList<Polyline> polylines = new ArrayList<>();
      ArrayList<Polygon> polygons = new ArrayList<>();
@@ -73,19 +72,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                    MarkerOptions markerOptions = new MarkerOptions();
                    markerOptions.position(latLng);
-                   placeMarkers.add(latLng);
                    try {
                        addresses = geocoder.getFromLocation(latLng.latitude, latLng.longitude, 1);
+                       if(!addresses.isEmpty())
+                       markerOptions.title
+                               ( addresses.get(0).getThoroughfare()+" "+ addresses.get(0).getSubThoroughfare()+" "+
+                                       addresses.get(0).getPostalCode()).
+                               snippet(addresses.get(0).getCountryName() +"  "+addresses.get(0).getLocality()).
+                               icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
                    } catch (IOException e) {
                      e.printStackTrace();
                        e.printStackTrace();
                    }
-
-                   markerOptions.title
-                           ( addresses.get(0).getThoroughfare()+" "+ addresses.get(0).getSubThoroughfare()+" "+
-                                   addresses.get(0).getPostalCode()).
-                           snippet(addresses.get(0).getCountryName() +"  "+addresses.get(0).getLocality()).
-                           icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
 
                   Marker ms =  mMap.addMarker(markerOptions);
                   ms.setDraggable(true);
@@ -119,6 +117,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             @Override
             public void onPolygonClick(Polygon polygon) {
+
                 float[] results0 = new float[1];
                 float[] results1 = new float[1];
                 float[] results2 = new float[1];
@@ -215,20 +214,6 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             @Override
             public void onMarkerDragStart(final Marker arg0) {
 
-
-                /*System.out.println("inside drag method");
-                System.out.println("arg0.getPosition().latitude==>"+arg0.getPosition().latitude);
-                System.out.println("arg0.getPosition().longitude==>"+arg0.getPosition().longitude);
-
-                Iterator<LatLng> iter = placeMarkers.iterator();
-                while (iter.hasNext()) {
-                    LatLng p = iter.next();
-                    if(p.longitude== arg0.getPosition().longitude && p.latitude== arg0.getPosition().latitude){
-                        iter.remove();
-                    }
-                }*/
-
-
             }
 
             @SuppressWarnings("unchecked")
@@ -249,7 +234,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                     iter1.remove();
                 }
 
-                placeMarkers.add(arg0.getPosition());
+
 
                  List<Address> addresses = null;
                  PolylineOptions polylineOptions1 = new PolylineOptions();
@@ -257,30 +242,25 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
                 for (int i = 0; i < dragMarker.size(); i++){
                     try {
-                        addresses = geocoder.getFromLocation(dragMarker.get(i).getPosition().latitude, dragMarker.get(i).getPosition().longitude, 1);
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        e.printStackTrace();
-                    }
+                        addresses = geocoder.getFromLocation(dragMarker.get(i).getPosition().latitude,
+                                dragMarker.get(i).getPosition().longitude, 1);
 
-                    if (addresses != null && !addresses.isEmpty()) {
-
+                        if(!addresses.isEmpty())
                         arg0.setTitle
                                 ( addresses.get(0).getThoroughfare()+" "+ addresses.get(0).getSubThoroughfare()+" "+
                                         addresses.get(0).getPostalCode());
 
                         arg0.setSnippet(addresses.get(0).getCountryName() +"  "+addresses.get(0).getLocality());
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        e.printStackTrace();
                     }
 
-
-
-                    polylineOptions1.add(new LatLng(dragMarker.get(i).getPosition().latitude , dragMarker.get(i).getPosition().longitude)).color(Color.RED);
+                    polylineOptions1.add(new LatLng(dragMarker.get(i).getPosition().latitude ,
+                            dragMarker.get(i).getPosition().longitude)).color(Color.RED);
                     polygonOptions1.add(dragMarker.get(i).getPosition());
 
-
                 }
-
-
 
                 Polyline p =  mMap.addPolyline(polylineOptions1);
                 p.setClickable(true);
@@ -296,58 +276,133 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
             @Override
             public void onMarkerDrag(Marker arg0) {
-                // TODO Auto-generated method stub
-               // Log.i("System out", "onMarkerDrag...");
+
             }
         });
 
-        /*googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+        googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
 
             @Override
-            public void onMapLongClick(LatLng latLng) {
+            public void onMapLongClick(final LatLng latLng) {
+                System.out.println("inside map long press");
+
+                /*Collections.sort(polylines, new Comparator<Polyline>() {
+
+                    @Override
+                    public int compare(Polyline polyline, Polyline t1) {
+                        Location currentLocation = new Location("currentLocation");
+                        currentLocation.setLatitude(latLng.latitude);
+                        currentLocation.setLongitude(latLng.longitude);
+
+                        ArrayList<Float> pointsA = new ArrayList<>();
+
+                        Location polylineA1 = new Location("point A");
+                        polylineA1.setLatitude(polyline.getPoints().get(0).latitude);
+                        polylineA1.setLongitude(polyline.getPoints().get(0).longitude);
+
+                        pointsA.add(currentLocation.distanceTo(polylineA1));
+
+                        ArrayList<Float> pointsA2 = new ArrayList<>();
+
+                        Location polylineA2 = new Location("point A2");
+                        polylineA2.setLatitude(polyline.getPoints().get(1).latitude);
+                        polylineA2.setLongitude(polyline.getPoints().get(1).longitude);
+
+                        pointsA2.add(currentLocation.distanceTo(polylineA2));
 
 
-                ArrayList<Marker> markers = new ArrayList<>();
-                markers = sortListbyDistance(placeMarkers, latLng);
+                        return Float.compare(distanceOne, distanceTwo);
+
+                    }
 
 
+                    public int compare(Marker marker, Marker t1) {
+                        Location currentLocation = new Location("currentLocation");
+                        currentLocation.setLatitude(latLng.latitude);
+                        currentLocation.setLongitude(latLng.longitude);
+                        Location locationA = new Location("point A");
+                        locationA.setLatitude(marker.getPosition().latitude);
+                        locationA.setLongitude(marker.getPosition().longitude);
+                        Location locationB = new Location("point B");
+                        locationB.setLatitude(t1.getPosition().latitude);
+                        locationB.setLongitude(t1.getPosition().longitude);
+                        float distanceOne = currentLocation.distanceTo(locationA);
+                        float distanceTwo = currentLocation.distanceTo(locationB);
+                        return Float.compare(distanceOne, distanceTwo);
+                    }
+                });*/
 
+if(dragMarker.size()>0){
+    Collections.sort(dragMarker, new Comparator<Marker>() {
 
+        @Override
+        public int compare(Marker marker, Marker t1) {
+            Location currentLocation = new Location("currentLocation");
+            currentLocation.setLatitude(latLng.latitude);
+            currentLocation.setLongitude(latLng.longitude);
+            Location locationA = new Location("point A");
+            locationA.setLatitude(marker.getPosition().latitude);
+            locationA.setLongitude(marker.getPosition().longitude);
+            Location locationB = new Location("point B");
+            locationB.setLatitude(t1.getPosition().latitude);
+            locationB.setLongitude(t1.getPosition().longitude);
+            float distanceOne = currentLocation.distanceTo(locationA);
+            float distanceTwo = currentLocation.distanceTo(locationB);
+            return Float.compare(distanceOne, distanceTwo);
+        }
+    });
+    dragMarker.get(0).remove();
+    count = count-1;
 
-
-
-
-            }
-        });*/
+    Iterator<Polyline> iter = polylines.iterator();
+    while (iter.hasNext()) {
+        Polyline p = iter.next();
+        p.remove();
+        iter.remove();
     }
 
-    public static ArrayList<LatLng> sortListbyDistance(ArrayList<LatLng> markers, final LatLng location){
-        Collections.sort(markers, new Comparator<LatLng>() {
-            @Override
-            public int compare(LatLng marker2, LatLng marker1) {
-                //
-                if(getDistanceBetweenPoints(marker1.latitude,
-                        marker1.longitude,location.latitude,location.longitude)
-                        >getDistanceBetweenPoints(marker2.latitude,marker2.longitude,location.latitude,location.latitude)){
-                    return -1;
-                } else {
-                    return 1;
-                }
+    Iterator<Polygon> iter1 = polygons.iterator();
+    while (iter1.hasNext()) {
+        Polygon p = iter1.next();
+        p.remove();
+        iter1.remove();
+
+
+
+        List<Address> addresses = null;
+        PolylineOptions polylineOptions1 = new PolylineOptions();
+        PolygonOptions polygonOptions1 = new PolygonOptions();
+
+        for (int i = 0; i < dragMarker.size(); i++){
+
+            polylineOptions1.add(new LatLng(dragMarker.get(i).getPosition().latitude ,
+                    dragMarker.get(i).getPosition().longitude)).color(Color.RED);
+            polygonOptions1.add(dragMarker.get(i).getPosition());
+
+        }
+
+        Polyline pp =  mMap.addPolyline(polylineOptions1);
+        p.setClickable(true);
+        polylines.add(pp);
+
+        if(count==4){
+            polygonOptions1.fillColor(Color.BLUE);
+            polygonOptions1.strokeColor(Color.RED);
+            Polygon pos = mMap.addPolygon(polygonOptions1);
+            pos.setClickable(true);
+            polygons.add(pos);
+        }
+
+    }
+
+}
+
+
+
             }
         });
-        return markers;
     }
 
-    public static float getDistanceBetweenPoints
-            (double firstLatitude, double firstLongitude, double secondLatitude, double secondLongitude) {
-        float[] results = new float[1];
-        Location.distanceBetween(firstLatitude, firstLongitude, secondLatitude, secondLongitude, results);
-        return results[0];
-    }
-
-    public void placeMarksDrawPolyline(){
-
-    }
 
     public LatLng findMidPoint(double lat1,double lon1,double lat2,double lon2){
         double dLon = Math.toRadians(lon2 - lon1);
