@@ -26,6 +26,8 @@ import com.google.android.gms.maps.model.PolylineOptions;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -34,8 +36,8 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private GoogleMap mMap;
     int count =0;
-    List<Marker> distanceMarkers = new ArrayList<>();
-    List<LatLng> placeMarkers = new ArrayList<>();
+    ArrayList<Marker> distanceMarkers = new ArrayList<>();
+    ArrayList<LatLng> placeMarkers = new ArrayList<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -73,17 +75,15 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                        e.printStackTrace();
                    }
 
-
                    markerOptions.title
                            ( addresses.get(0).getThoroughfare()+" "+ addresses.get(0).getSubThoroughfare()+" "+
                                    addresses.get(0).getPostalCode()).
                            snippet(addresses.get(0).getCountryName() +"  "+addresses.get(0).getLocality()).
                            icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
 
-                   mMap.addMarker(markerOptions);
+                   mMap.addMarker(markerOptions).setDraggable(true);
                    polylineOptions.add(new LatLng(latLng.latitude , latLng.longitude)).color(Color.RED);
                    mMap.addPolyline(polylineOptions).setClickable(true);
-
                    mMap.animateCamera(CameraUpdateFactory.newLatLng(latLng));
                    polygonOptions.add(new LatLng(latLng.latitude , latLng.longitude));
 
@@ -201,6 +201,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.setOnMarkerDragListener(new GoogleMap.OnMarkerDragListener() {
             @Override
             public void onMarkerDragStart(final Marker arg0) {
+                System.out.println("inside drag method");
+                System.out.println("arg0.getPosition().latitude==>"+arg0.getPosition().latitude);
+                System.out.println("arg0.getPosition().longitude==>"+arg0.getPosition().longitude);
 
                 Iterator<LatLng> iter = placeMarkers.iterator();
                 while (iter.hasNext()) {
@@ -211,17 +214,40 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
                 }
 
 
-
             }
 
             @SuppressWarnings("unchecked")
             @Override
             public void onMarkerDragEnd(Marker arg0) {
                 mMap.clear();
-                // TODO Auto-generated method stub
-
-                mMap.animateCamera(CameraUpdateFactory.newLatLng(arg0.getPosition()));
+                MarkerOptions markerOptions = new MarkerOptions();
                 placeMarkers.add(arg0.getPosition());
+                List<Address> addresses = null;
+               PolylineOptions polylineOptions1 = new PolylineOptions();
+               PolygonOptions polygonOptions1 = new PolygonOptions();
+
+                for (int i = 0; i < placeMarkers.size(); i++){
+                    try {
+                        addresses = geocoder.getFromLocation(placeMarkers.get(i).latitude, placeMarkers.get(i).longitude, 1);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        e.printStackTrace();
+                    }
+                    markerOptions.title
+                            ( addresses.get(0).getThoroughfare()+" "+ addresses.get(0).getSubThoroughfare()+" "+
+                                    addresses.get(0).getPostalCode()).
+                            snippet(addresses.get(0).getCountryName() +"  "+addresses.get(0).getLocality()).
+                            icon(BitmapDescriptorFactory.defaultMarker(BitmapDescriptorFactory.HUE_YELLOW));
+                    markerOptions.position(placeMarkers.get(i));
+                    mMap.animateCamera(CameraUpdateFactory.newLatLng(placeMarkers.get(i)));
+                    mMap.addMarker(markerOptions).setDraggable(true);
+                    polylineOptions1.add(new LatLng(placeMarkers.get(i).latitude , placeMarkers.get(i).longitude)).color(Color.RED);
+                    polygonOptions1.add(placeMarkers.get(i));
+
+                }
+                mMap.addPolyline(polylineOptions1).setClickable(true);
+                mMap.addPolygon(polygonOptions1);
+
             }
 
             @Override
@@ -231,6 +257,48 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
 
+        /*googleMap.setOnMapLongClickListener(new GoogleMap.OnMapLongClickListener() {
+
+            @Override
+            public void onMapLongClick(LatLng latLng) {
+
+
+                ArrayList<Marker> markers = new ArrayList<>();
+                markers = sortListbyDistance(placeMarkers, latLng);
+
+
+
+
+
+
+
+
+            }
+        });*/
+    }
+
+    public static ArrayList<LatLng> sortListbyDistance(ArrayList<LatLng> markers, final LatLng location){
+        Collections.sort(markers, new Comparator<LatLng>() {
+            @Override
+            public int compare(LatLng marker2, LatLng marker1) {
+                //
+                if(getDistanceBetweenPoints(marker1.latitude,
+                        marker1.longitude,location.latitude,location.longitude)
+                        >getDistanceBetweenPoints(marker2.latitude,marker2.longitude,location.latitude,location.latitude)){
+                    return -1;
+                } else {
+                    return 1;
+                }
+            }
+        });
+        return markers;
+    }
+
+    public static float getDistanceBetweenPoints
+            (double firstLatitude, double firstLongitude, double secondLatitude, double secondLongitude) {
+        float[] results = new float[1];
+        Location.distanceBetween(firstLatitude, firstLongitude, secondLatitude, secondLongitude, results);
+        return results[0];
     }
 
     public void placeMarksDrawPolyline(){
